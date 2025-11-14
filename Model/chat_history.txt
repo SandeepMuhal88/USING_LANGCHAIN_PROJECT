@@ -1,0 +1,6 @@
+HumanMessgae(content="I want to request a refund fro my order #12345.")
+AIMessage(content="I am sorry to hear that you are not satisfied with your order. Please provide me with the order number and the reason for your refund request.")
+HumanMessgae(content="I want to request a refund fro my order #12345.")
+AIMessage(content="I am sorry to hear that you are not satisfied with your order. Please provide me with the order number and the reason for your refund request.")
+HumanMessgae(content="I want to request a refund fro my order #12345.")
+AIMessage(content="I am sorry to hear that you are not satisfied with your order. Please provide me with the order number and the reason for your refund request.")
