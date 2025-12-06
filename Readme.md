@@ -199,4 +199,153 @@ rag = ({"context": retriever, "question": RunnablePassthrough()} | prompt) | llm
 
 ---
 
+# Agents Cheat Sheet (LangChain 1.x)
+
+A concise reference for building and debugging agents with LangChain (post-1.0). Covers core agent types, tools, memory strategies, safety, and example setups.
+
+---
+
+## 1. What is an Agent?
+
+An *Agent* is a program that uses an LLM to decide which actions (tools) to run, in what order, and when to stop. Agents allow chaining tool calls, external data access, and planning.
+
+Agents = *LLM (reasoning) + Tools (actions) + Memory (state) + Controller (policy)*.
+
+---
+
+## 2. Core Agent Types
+
+### 2.1 ReAct-style (Reason + Act)
+
+* Agent produces reasoning traces + tool calls in the same output.
+* Good for interactive, stepwise problem solving.
+
+### 2.2 Zero-shot / Few-shot Tool-Use Agent
+
+* Uses prompt templates to teach LLM how to call tools (no training).
+* Simpler, but prompt engineering is key.
+
+### 2.3 Planner + Executor (Hierarchical)
+
+* Planner: breaks goal into sub-tasks.
+* Executor: runs tools for each subtask.
+* Useful for complex multi-step workflows.
+
+### 2.4 Retrieval-Augmented Agent
+
+* Agent uses a retriever as a tool to fetch facts/contexts before deciding further actions.
+
+---
+
+## 3. Tools
+
+* Tools are callable functions that the LLM can trigger.
+* Typical tools: `search`, `code_executor`, `calculator`, `file_reader`, `api_caller`.
+* In LangChain: tools are usually subclasses of `Tool` or wrappers provided in `langchain_community.tools`.
+
+**Design tip:** Give tools clear `name`, `description`, and deterministic outputs.
+
+---
+
+## 4. Memory Strategies
+
+* **No memory:** stateless agents for single query tasks.
+* **Short-term buffer:** `ConversationBufferMemory` — keep last N interactions.
+* **Summarization memory:** `ConversationSummaryMemory` — keep condensed history.
+* **Long-term/DB memory:** Persist important facts to DB (Redis, PG) and load as context when needed.
+
+Memory classes are in `langchain_community.memory` (post-1.0).
+
+---
+
+## 5. Safety & Guardrails
+
+* **Tool whitelisting:** restrict tools available in production.
+* **Action limits / step limits:** prevent runaway loops (max_steps).
+* **Output validation:** use output parsers and validators.
+* **Rate limiting & timeouts:** for external services.
+* **Human-in-the-loop:** for high-risk decisions.
+
+---
+
+## 6. Debugging Patterns
+
+* **1. Reproduce with fixed seed / stub LLM:** Use deterministic LLM or mock responses.
+* **2. Log action trace:** Capture LLM thoughts, tool calls, responses.
+* **3. Unit-test tools separately.**
+* **4. Validate tool outputs before feeding back to LLM.**
+
+---
+
+## 7. Example: ReAct-style Agent (conceptual)
+
+```py
+from langchain_core.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
+from langchain.tools import Tool
+from langchain_community.memory import ConversationBufferMemory
+from langchain_experimental.agents import ReActAgent  # conceptual
+
+# Tools
+search_tool = Tool(
+    name="serp",
+    func=duckduckgo_search,
+    description="Search the web and return top results"
+)
+
+# Memory
+memory = ConversationBufferMemory(k=6)
+
+# LLM
+llm = ChatOpenAI(model="gpt-4o-mini")
+
+# Agent (pseudo-class)
+agent = ReActAgent(llm=llm, tools=[search_tool], memory=memory, max_steps=6)
+
+# Run
+agent.run("What's the latest on space launches this month?")
+```
+
+---
+
+## 8. Agent Patterns & Tips
+
+* **Few-shot prompts:** include tool examples and expected formats.
+* **Chain-of-thought control:** either encourage or suppress verbose reasoning depending on token budget.
+* **Tool result summarization:** summarize long tool outputs before returning to agent.
+* **Fail-safe responses:** if tools fail, agent should have fallback behaviors.
+
+---
+
+## 9. Common Pitfalls & Fixes
+
+* **LLM hallucination of tool results:** validate tool outputs and include source evidence.
+* **Tool name mismatches in prompts:** ensure prompt names exactly match code tool names.
+* **Agent loops:** impose step limits and timeouts.
+* **Memory bloat:** summarize or prune old entries.
+
+---
+
+## 10. Libraries & Imports (Quick list)
+
+```
+from langchain_core.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
+from langchain.tools import Tool
+from langchain_community.memory import ConversationBufferMemory
+from langchain_community.tools import DuckDuckGoSearchRun
+from langchain_experimental.agents import create_pandas_dataframe_agent
+```
+
+---
+
+## 11. Further Reading & Next Steps
+
+* Implement a small ReAct demo with 2 tools: `search` + `calculator`.
+* Add a retriever tool that queries your RAG index.
+* Build unit tests for tools and agent steps.
+
+---
+
+*End of Agents Cheat Sheet.*
 
